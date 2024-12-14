@@ -1,3 +1,5 @@
+const search = document.getElementById("search");
+
 const loadCandidateData = async () => {
   try {
     // JSON 파일 로드
@@ -5,6 +7,8 @@ const loadCandidateData = async () => {
     const jsonData = await response.json();
 
     const searchCandidate = sessionStorage.getItem('selectedCandidateNum');
+    search.addEventListener("input", () => filterCandidates(jsonData, search.value.trim(),searchCandidate));
+
     if (searchCandidate) {
       // 태그 표시
       displayRealmNames(jsonData, searchCandidate);
@@ -72,35 +76,48 @@ const filterCandidates = (jsonData, query, searchCandidate) => {
   // 특정 후보자에 대한 결과만 필터링
   const candidate = jsonData.results.find(candidate => candidate.cnddtId == searchCandidate);
   if (candidate) {
+    let hasResults = false; // 검색 결과 확인용 플래그
+    const searchname = document.createElement("div");
+    searchname.innerHTML = `<strong>${query}</strong> 카테고리에 해당하는 공약 내용입니다.`;
+
     candidate.promises.forEach(promise => {
       if (
         promise.prmsRealmName.includes(query) ||
         promise.prmsTitle.includes(query) ||
         promise.prmsCont.includes(query)
       ) {
+        if (!hasResults) {
+          searchResults.appendChild(searchname); // 첫 번째 결과에만 카테고리 이름 추가
+          hasResults = true;
+        }
+
         // 결과 요소 생성
-        let result_item = document.createElement("div");
+        const result_item = document.createElement("div");
         result_item.className = "result-item";
-        let searchname=document.createElement("div");
-        searchname.innerHTML= `<strong>${query}</strong> 카테고리에 해당하는 공약 내용입니다.`;
+
         // 텍스트 내용
-        let result_text = document.createElement("div");
+        const result_text = document.createElement("div");
         result_text.className = "result-text";
+
         // 설명
-        let result_description = document.createElement("div");
+        const result_description = document.createElement("div");
         result_description.className = "result-description";
-        let result_cont = document.createElement("p");
+        const result_cont = document.createElement("p");
         result_cont.textContent = promise.prmsCont;
+
         result_description.appendChild(result_cont);
         result_text.appendChild(result_description);
-
-        // DOM 연결
         result_item.appendChild(result_text);
-        searchResults.appendChild(searchname);
         searchResults.appendChild(result_item);
       }
     });
+
+    // 검색 결과가 없는 경우 메시지 표시
+    if (!hasResults) {
+      searchResults.innerHTML = `<p><strong>${query}</strong>에 해당하는 공약이 없습니다.</p>`;
+    }
   }
 };
+
 
 document.addEventListener("DOMContentLoaded", loadCandidateData);
